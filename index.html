@@ -129,13 +129,13 @@
             const currentDay = today.getDate();
 
             // SharePoint site URL'nizi buraya yazın
-            const siteUrl = _spPageContextInfo.webAbsoluteUrl;
+            const siteUrl = "https://doqu365.sharepoint.com/sites/DOQUHABER";
             
             // Çalışanlar listesinin adını buraya yazın (örneğin "Employees" veya "Personel")
             const listName = "Personel Listesi";
 
             $.ajax({
-                url: `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,DogumTarihi`,
+                url: `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,BirthDate`,
                 method: "GET",
                 headers: {
                     "Accept": "application/json; odata=verbose"
