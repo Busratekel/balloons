@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -57,9 +58,26 @@
             0%, 100% { transform: rotate(-5deg); }
             50% { transform: rotate(5deg); }
         }
+
+        #birthdayMessage {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 18px;
+            color: #FF1493;
+            z-index: 10000;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div id="birthdayMessage"></div>
     <script>
         function createBalloon() {
             const colors = [
@@ -104,12 +122,67 @@
             }
         }
 
-        // Her 2 saniyede bir grup balon oluştur
-        setInterval(createBalloonGroup, 2000);
+        function checkBirthdays() {
+            // SharePoint REST API'sini kullanarak doğum günlerini kontrol et
+            const today = new Date();
+            const currentMonth = today.getMonth() + 1; // JavaScript'te aylar 0'dan başlar
+            const currentDay = today.getDate();
 
-        // Başlangıçta iki grup balon oluştur
-        createBalloonGroup();
-        setTimeout(createBalloonGroup, 1000);
+            // SharePoint site URL'nizi buraya yazın
+            const siteUrl = _spPageContextInfo.webAbsoluteUrl;
+            
+            // Çalışanlar listesinin adını buraya yazın (örneğin "Employees" veya "Personel")
+            const listName = "Personel Listesi";
+
+            $.ajax({
+                url: `${siteUrl}/_api/web/lists/getbytitle('${listName}')/items?$select=Title,DogumTarihi`,
+                method: "GET",
+                headers: {
+                    "Accept": "application/json; odata=verbose"
+                },
+                success: function(data) {
+                    const birthdayPeople = [];
+                    data.d.results.forEach(person => {
+                        if (person.BirthDate) {
+                            const birthDate = new Date(person.BirthDate);
+                            if (birthDate.getMonth() + 1 === currentMonth && 
+                                birthDate.getDate() === currentDay) {
+                                birthdayPeople.push(person.Title);
+                            }
+                        }
+                    });
+
+                    if (birthdayPeople.length > 0) {
+                        // Doğum günü olan kişiler varsa balonları başlat
+                        startBalloons(birthdayPeople);
+                    }
+                },
+                error: function(error) {
+                    console.error("Doğum günleri kontrol edilirken hata oluştu:", error);
+                }
+            });
+        }
+
+        function startBalloons(birthdayPeople) {
+            // Doğum günü mesajını göster
+            const messageDiv = document.getElementById('birthdayMessage');
+            if (birthdayPeople.length === 1) {
+                messageDiv.innerHTML = `Bugün ${birthdayPeople[0]}'in doğum günü! 🎉`;
+            } else {
+                messageDiv.innerHTML = `Bugün ${birthdayPeople.join(', ')}'in doğum günü! 🎉`;
+            }
+            messageDiv.style.display = 'block';
+
+            // Balonları başlat
+            setInterval(createBalloonGroup, 2000);
+            createBalloonGroup();
+            setTimeout(createBalloonGroup, 1000);
+        }
+
+        // Sayfa yüklendiğinde doğum günlerini kontrol et
+        $(document).ready(function() {
+            checkBirthdays();
+        });
     </script>
 </body>
 </html>
